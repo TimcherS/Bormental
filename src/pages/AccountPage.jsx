@@ -2,6 +2,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { BarChart3, LogOut, Trash2, User } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
 import { useState } from 'react';
+import Logo from '../components/Logo';
 
 export default function AccountPage() {
   const { theme, toggleTheme } = useTheme();
@@ -12,14 +13,14 @@ export default function AccountPage() {
   });
 
   const handleLogout = () => {
-    if (confirm('Are you sure you want to logout?')) {
+    if (confirm('Вы уверены, что хотите выйти?')) {
       localStorage.removeItem('user');
       navigate('/login');
     }
   };
 
   const handleDeleteAccount = () => {
-    if (confirm('Are you sure you want to delete your account? This action cannot be undone.')) {
+    if (confirm('Вы уверены, что хотите удалить аккаунт? Это действие нельзя отменить.')) {
       localStorage.clear();
       navigate('/');
     }
@@ -33,9 +34,8 @@ export default function AccountPage() {
       <nav className="border-b border-gray-200 dark:border-gray-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <Link to="/canvas-select" className="flex items-center gap-2">
-              <BarChart3 className="w-8 h-8" />
-              <span className="text-xl font-semibold">Business Copilot</span>
+            <Link to="/canvas-select" className="hover:opacity-80 transition-opacity">
+              <Logo showText={true} />
             </Link>
             <button
               onClick={toggleTheme}
@@ -51,16 +51,18 @@ export default function AccountPage() {
       {/* Main Content */}
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="mb-8">
-          <h1 className="text-4xl font-bold mb-2">Account Settings</h1>
+          <h1 className="text-4xl font-bold mb-2">Настройки аккаунта</h1>
           <p className="text-gray-600 dark:text-gray-400">
-            Manage your account and preferences
+            Управляйте аккаунтом и настройками
           </p>
         </div>
 
         {/* Profile Section */}
         <div className="border border-gray-200 dark:border-gray-800 rounded-2xl p-6 mb-6">
           <div className="flex items-center gap-4 mb-6">
-            <div className="w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-900 flex items-center justify-center">
+            <div className={`w-16 h-16 rounded-full flex items-center justify-center ${
+              theme === 'dark' ? 'bg-gray-800 text-gray-300' : 'bg-gray-200 text-gray-600'
+            }`}>
               <User className="w-8 h-8" />
             </div>
             <div>
@@ -68,46 +70,62 @@ export default function AccountPage() {
               <p className="text-gray-600 dark:text-gray-400">{user.email}</p>
             </div>
           </div>
-          <button className="w-full sm:w-auto px-4 py-2 border border-gray-200 dark:border-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-900 transition-colors">
-            Edit Profile
+          <button className={`w-full sm:w-auto px-4 py-2 border rounded-lg transition-colors ${
+            theme === 'dark'
+              ? 'border-gray-800 hover:bg-gray-900 text-white'
+              : 'border-gray-300 hover:bg-gray-50 text-gray-900'
+          }`}>
+            Редактировать профиль
           </button>
         </div>
 
         {/* Subscription Section */}
         <div className="border border-gray-200 dark:border-gray-800 rounded-2xl p-6 mb-6">
-          <h2 className="text-xl font-semibold mb-4">Subscription</h2>
+          <h2 className="text-xl font-semibold mb-4">Подписка</h2>
           <div className="flex items-center justify-between mb-4">
             <div>
-              <p className="font-medium">Free Plan</p>
+              <p className="font-medium">Бесплатный тариф</p>
               <p className="text-sm text-gray-600 dark:text-gray-400">
-                Upgrade to Pro for unlimited canvases and widgets
+                Обновитесь до Pro для неограниченных холстов и виджетов
               </p>
             </div>
-            <span className="px-3 py-1 bg-gray-100 dark:bg-gray-900 rounded-full text-sm font-medium">
-              Active
+            <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+              theme === 'dark' 
+                ? 'bg-green-900/30 text-green-400' 
+                : 'bg-green-100 text-green-700'
+            }`}>
+              Активна
             </span>
           </div>
-          <button className="w-full sm:w-auto px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-lg hover:opacity-90 transition-opacity">
-            Upgrade to Pro
+          <button className={`w-full sm:w-auto px-4 py-2 rounded-lg font-medium transition-colors ${
+            theme === 'dark' 
+              ? 'bg-white text-black hover:bg-gray-200' 
+              : 'bg-blue-600 text-white hover:bg-blue-700'
+          }`}>
+            Обновить до Pro
           </button>
         </div>
 
         {/* Preferences Section */}
         <div className="border border-gray-200 dark:border-gray-800 rounded-2xl p-6 mb-6">
-          <h2 className="text-xl font-semibold mb-4">Preferences</h2>
+          <h2 className="text-xl font-semibold mb-4">Настройки</h2>
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="font-medium">Theme</p>
+                <p className="font-medium">Тема</p>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Currently using {theme} mode
+                  Сейчас используется {theme === 'dark' ? 'тёмная' : 'светлая'} тема
                 </p>
               </div>
               <button
                 onClick={toggleTheme}
-                className="px-4 py-2 border border-gray-200 dark:border-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-900 transition-colors"
+                className={`px-4 py-2 border rounded-lg transition-colors ${
+                  theme === 'dark'
+                    ? 'border-gray-800 hover:bg-gray-900 text-white'
+                    : 'border-gray-300 hover:bg-gray-50 text-gray-900'
+                }`}
               >
-                Toggle Theme
+                Переключить тему
               </button>
             </div>
           </div>
@@ -115,17 +133,21 @@ export default function AccountPage() {
 
         {/* Actions Section */}
         <div className="border border-gray-200 dark:border-gray-800 rounded-2xl p-6">
-          <h2 className="text-xl font-semibold mb-4">Actions</h2>
+          <h2 className="text-xl font-semibold mb-4">Действия</h2>
           <div className="space-y-3">
             <button
               onClick={handleLogout}
-              className="w-full flex items-center gap-3 px-4 py-3 rounded-lg border border-gray-200 dark:border-gray-800 hover:bg-gray-100 dark:hover:bg-gray-900 transition-colors text-left"
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg border transition-colors text-left ${
+                theme === 'dark'
+                  ? 'border-gray-800 hover:bg-gray-900 text-white'
+                  : 'border-gray-300 hover:bg-gray-50 text-gray-900'
+              }`}
             >
               <LogOut className="w-5 h-5" />
               <div>
-                <p className="font-medium">Logout</p>
+                <p className="font-medium">Выйти</p>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Sign out of your account
+                  Выйти из аккаунта
                 </p>
               </div>
             </button>
@@ -135,9 +157,9 @@ export default function AccountPage() {
             >
               <Trash2 className="w-5 h-5" />
               <div>
-                <p className="font-medium">Delete Account</p>
+                <p className="font-medium">Удалить аккаунт</p>
                 <p className="text-sm">
-                  Permanently delete your account and all data
+                  Безвозвратно удалить аккаунт и все данные
                 </p>
               </div>
             </button>
@@ -148,9 +170,13 @@ export default function AccountPage() {
         <div className="mt-8">
           <Link
             to="/canvas-select"
-            className="inline-flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors"
+            className={`inline-flex items-center gap-2 transition-colors ${
+              theme === 'dark'
+                ? 'text-gray-400 hover:text-white'
+                : 'text-gray-600 hover:text-gray-900'
+            }`}
           >
-            ← Back to Canvases
+            ← Назад к холстам
           </Link>
         </div>
       </div>

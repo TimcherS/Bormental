@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Type, MessageCircle, BarChart3, Users, Mail, Calendar, DollarSign, Target, Palette, Zap, Lock, Globe } from 'lucide-react';
+import { Type, MessageCircle, BarChart3, Users, Mail, Calendar, DollarSign, Target, Palette, Zap, Lock, Globe, Plus, Trash2, Newspaper } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
 import Modal from './Modal';
 
@@ -39,30 +39,38 @@ export default function WidgetConfigModal({ widget, open, onOpenChange, onSave }
     const newErrors = {};
     switch (widget.type) {
       case 'social-media':
-        if (!config.platform) newErrors.platform = 'Please select a platform';
-        if (config.apiKey && !config.apiSecret) newErrors.apiSecret = 'API Secret is required';
+        if (!config.platform) newErrors.platform = 'Выберите платформу';
+        if (config.apiKey && !config.apiSecret) newErrors.apiSecret = 'Требуется секретный ключ API';
         break;
       case 'email':
-        if (!config.service) newErrors.service = 'Please select an email service';
-        if (!config.email) newErrors.email = 'Email address is required';
-        if (!config.password && !config.apiKey) newErrors.password = 'Password or API Key is required';
+        if (!config.service) newErrors.service = 'Выберите почтовый сервис';
+        if (!config.email) newErrors.email = 'Требуется адрес электронной почты';
+        if (!config.password && !config.apiKey) newErrors.password = 'Требуется пароль или API-ключ';
         break;
       case 'calendar':
-        if (!config.source) newErrors.source = 'Please select a calendar source';
-        if (config.source && !config.apiKey) newErrors.apiKey = 'API Key is required';
-        if (!config.calendarName) newErrors.calendarName = 'Calendar name is required';
+        if (!config.calendarName) newErrors.calendarName = 'Требуется название календаря';
+        // Allow saving without sources configured (will show mock data)
         break;
       case 'revenue':
-        if (!config.accountingSystem) newErrors.accountingSystem = 'Please select an accounting system';
+        if (!config.accountingSystem) newErrors.accountingSystem = 'Выберите систему учета';
         break;
       case 'marketing':
-        if (!config.platform) newErrors.platform = 'Please select a marketing platform';
+        if (!config.platform) newErrors.platform = 'Выберите маркетинговую платформу';
         break;
       case 'chatgpt':
-        if (!config.apiKey) newErrors.apiKey = 'OpenAI API key is required';
+        if (!config.apiKey) newErrors.apiKey = 'Требуется API-ключ OpenAI';
         // Validate API key format
         if (config.apiKey && !config.apiKey.startsWith('sk-')) {
-          newErrors.apiKey = 'API key must start with "sk-"';
+          newErrors.apiKey = 'API-ключ должен начинаться с "sk-"';
+        }
+        break;
+      case 'news':
+        // News widget validation - optional configuration
+        if (config.themes && config.themes.length === 0 && config.customTheme && !config.customTheme.trim()) {
+          newErrors.themes = 'Выберите хотя бы одну тему или введите свою';
+        }
+        if (!config.agencies || config.agencies.length === 0) {
+          newErrors.agencies = 'Выберите хотя бы одно новостное агентство';
         }
         break;
     }
@@ -110,19 +118,19 @@ export default function WidgetConfigModal({ widget, open, onOpenChange, onSave }
                   }`} />
                   <h4 className={`text-sm font-semibold ${
                     theme === 'dark' ? 'text-gray-100' : 'text-gray-900'
-                  }`}>Note Settings</h4>
+                  }`}>Настройки заметки</h4>
                 </div>
                 <div className="space-y-2">
                   <label className={`block ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
                     <span className="flex items-center gap-2 font-medium text-sm">
-                      Widget Name
+                      Название виджета
                     </span>
                   </label>
                   <input
                     type="text"
                     value={config.name || ''}
                     onChange={(e) => setConfig({ ...config, name: e.target.value })}
-                    placeholder="Enter widget name (e.g., 'Meeting Notes')"
+                    placeholder="Введите название (например, 'Заметки встречи')"
                     className={`input input-bordered w-full py-2.5 px-4 ${
                       theme === 'dark' 
                         ? 'bg-gray-700 border-gray-600 text-white' 
@@ -134,16 +142,16 @@ export default function WidgetConfigModal({ widget, open, onOpenChange, onSave }
                   <label className={`block ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
                     <span className="flex items-center gap-2 font-medium text-sm">
                       <Type className="w-3 h-3" />
-                      Font Size
+                      Размер шрифта
                     </span>
                   </label>
                   <SelectComponent
                     value={config.fontSize || 'medium'}
                     onValueChange={(value) => setConfig({ ...config, fontSize: value })}
                     options={[
-                      { value: 'small', label: 'Small' },
-                      { value: 'medium', label: 'Medium' },
-                      { value: 'large', label: 'Large' }
+                      { value: 'small', label: 'Маленький' },
+                      { value: 'medium', label: 'Средний' },
+                      { value: 'large', label: 'Большой' }
                     ]}
                     placeholder="Select font size"
                     theme={theme}
@@ -153,18 +161,18 @@ export default function WidgetConfigModal({ widget, open, onOpenChange, onSave }
                   <label className={`block ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
                     <span className="flex items-center gap-2 font-medium text-sm">
                       <Palette className="w-3 h-3" />
-                      Background Color
+                      Цвет фона
                     </span>
                   </label>
                   <SelectComponent
                     value={config.backgroundColor || 'default'}
                     onValueChange={(value) => setConfig({ ...config, backgroundColor: value })}
                     options={[
-                      { value: 'default', label: 'Default' },
-                      { value: 'yellow', label: 'Yellow' },
-                      { value: 'blue', label: 'Blue' },
-                      { value: 'green', label: 'Green' },
-                      { value: 'pink', label: 'Pink' }
+                      { value: 'default', label: 'Стандартный' },
+                      { value: 'yellow', label: 'Жёлтый' },
+                      { value: 'blue', label: 'Синий' },
+                      { value: 'green', label: 'Зелёный' },
+                      { value: 'pink', label: 'Розовый' }
                     ]}
                     placeholder="Select background"
                     theme={theme}
@@ -190,19 +198,19 @@ export default function WidgetConfigModal({ widget, open, onOpenChange, onSave }
                   }`} />
                   <h4 className={`text-sm font-semibold ${
                     theme === 'dark' ? 'text-gray-100' : 'text-gray-900'
-                  }`}>API Configuration</h4>
+                  }`}>Настройка API</h4>
                 </div>
                 <div className="space-y-2">
                   <label className={`block ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
                     <span className="flex items-center gap-2 font-medium text-sm">
-                      Widget Name
+                      Название виджета
                     </span>
                   </label>
                   <input
                     type="text"
                     value={config.name || ''}
                     onChange={(e) => setConfig({ ...config, name: e.target.value })}
-                    placeholder="Enter widget name (e.g., 'AI Assistant')"
+                    placeholder="Введите название (например, 'ИИ-помощник')"
                     className={`input input-bordered w-full py-2.5 px-4 ${
                       theme === 'dark' 
                         ? 'bg-gray-700 border-gray-600 text-white' 
@@ -214,14 +222,14 @@ export default function WidgetConfigModal({ widget, open, onOpenChange, onSave }
                   <label className={`block ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
                     <span className="flex items-center gap-2 font-medium text-sm">
                       <Lock className="w-3 h-3" />
-                      OpenAI API Key
+                      API-ключ OpenAI
                     </span>
                   </label>
                   <input
                     type="password"
                     value={config.apiKey || ''}
                     onChange={(e) => setConfig({ ...config, apiKey: e.target.value })}
-                    placeholder="Enter your OpenAI API key (sk-...)"
+                    placeholder="Введите ваш API-ключ OpenAI (sk-...)"
                     className={`input input-bordered w-full py-2.5 px-4 ${
                       errors.apiKey ? 'input-error' : ''
                     } ${
@@ -247,7 +255,7 @@ export default function WidgetConfigModal({ widget, open, onOpenChange, onSave }
                   }`} />
                   <h4 className={`text-sm font-semibold ${
                     theme === 'dark' ? 'text-gray-100' : 'text-gray-900'
-                  }`}>Model Settings</h4>
+                  }`}>Настройки модели</h4>
                 </div>
                 <div className="space-y-2">
                   <label className={`block ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
@@ -293,7 +301,7 @@ export default function WidgetConfigModal({ widget, open, onOpenChange, onSave }
                   <label className={`block ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
                     <span className="flex items-center gap-2 font-medium text-sm">
                       <Target className="w-3 h-3" />
-                      Max Tokens
+                      Максимум токенов
                     </span>
                   </label>
                   <input
@@ -325,13 +333,13 @@ export default function WidgetConfigModal({ widget, open, onOpenChange, onSave }
                   }`} />
                   <h4 className={`text-sm font-semibold ${
                     theme === 'dark' ? 'text-gray-100' : 'text-gray-900'
-                  }`}>Prompt Settings</h4>
+                  }`}>Настройки промпта</h4>
                 </div>
                 <div className="space-y-2">
                   <label className={`block ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
                     <span className="flex items-center gap-2 font-medium text-sm">
                       <MessageCircle className="w-3 h-3" />
-                      System Prompt
+                      Системный промпт
                     </span>
                   </label>
                   <textarea
@@ -366,7 +374,7 @@ export default function WidgetConfigModal({ widget, open, onOpenChange, onSave }
                   }`} />
                   <h4 className={`text-sm font-semibold ${
                     theme === 'dark' ? 'text-gray-100' : 'text-gray-900'
-                  }`}>Basic Settings</h4>
+                  }`}>Основные настройки</h4>
                 </div>
                 <div className="space-y-2">
                   <label className={`block ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
@@ -751,13 +759,13 @@ export default function WidgetConfigModal({ widget, open, onOpenChange, onSave }
                   }`} />
                   <h4 className={`text-sm font-semibold ${
                     theme === 'dark' ? 'text-gray-100' : 'text-gray-900'
-                  }`}>Filter Settings</h4>
+                  }`}>Настройки фильтров</h4>
                 </div>
                 <div className="space-y-2">
                   <label className={`block ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
                     <span className="flex items-center gap-2 font-medium text-sm">
                       <Zap className="w-3 h-3" />
-                      Filter Preferences
+                      Настройки фильтров
                     </span>
                   </label>
                   <textarea
@@ -778,6 +786,26 @@ export default function WidgetConfigModal({ widget, open, onOpenChange, onSave }
         );
 
       case 'calendar':
+        const sources = config.sources || [];
+        const [newSource, setNewSource] = useState({ type: '', apiKey: '', name: '' });
+        
+        const addSource = () => {
+          if (newSource.type && newSource.apiKey && newSource.name) {
+            setConfig({ 
+              ...config, 
+              sources: [...sources, { ...newSource, id: Date.now().toString() }]
+            });
+            setNewSource({ type: '', apiKey: '', name: '' });
+          }
+        };
+        
+        const removeSource = (id) => {
+          setConfig({ 
+            ...config, 
+            sources: sources.filter(s => s.id !== id)
+          });
+        };
+
         return (
           <form id="widget-config-form" onSubmit={handleSubmit} className="space-y-5">
             <div className={`p-6 rounded-xl border ${
@@ -815,27 +843,6 @@ export default function WidgetConfigModal({ widget, open, onOpenChange, onSave }
                 <div className="space-y-2">
                   <label className={`block ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
                     <span className="flex items-center gap-2 font-medium text-sm">
-                      <Globe className="w-3 h-3" />
-                      Calendar Source
-                    </span>
-                  </label>
-                  <SelectComponent
-                    value={config.source || ''}
-                    onValueChange={(value) => setConfig({ ...config, source: value })}
-                    options={[
-                      { value: 'bitrix24', label: 'Битрикс24' },
-                      { value: 'amocrm', label: 'AmoCRM' },
-                      { value: 'yandex', label: 'Яндекс Трекер' },
-                      { value: 'google', label: 'Google Calendar' }
-                    ]}
-                    placeholder="Select calendar source"
-                    theme={theme}
-                  />
-                  {errors.source && <p className="text-error text-xs mt-2">{errors.source}</p>}
-                </div>
-                <div className="space-y-2">
-                  <label className={`block ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
-                    <span className="flex items-center gap-2 font-medium text-sm">
                       <Type className="w-3 h-3" />
                       Calendar Name
                     </span>
@@ -844,7 +851,7 @@ export default function WidgetConfigModal({ widget, open, onOpenChange, onSave }
                     type="text"
                     value={config.calendarName || ''}
                     onChange={(e) => setConfig({ ...config, calendarName: e.target.value })}
-                    placeholder="Enter calendar name"
+                    placeholder="e.g., 'Business Events', 'Work Schedule'"
                     className={`input input-bordered w-full py-2.5 px-4 ${
                       theme === 'dark' 
                         ? 'bg-gray-700 border-gray-600 text-white' 
@@ -852,6 +859,9 @@ export default function WidgetConfigModal({ widget, open, onOpenChange, onSave }
                     } focus:outline-none focus:ring-2 focus:ring-blue-500`}
                   />
                   {errors.calendarName && <p className="text-error text-xs mt-2">{errors.calendarName}</p>}
+                  <p className={`text-xs mt-2 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
+                    Name your calendar to separate work from personal life, or divide meetings by department.
+                  </p>
                 </div>
               </div>
             </div>
@@ -862,34 +872,105 @@ export default function WidgetConfigModal({ widget, open, onOpenChange, onSave }
                 : 'bg-gray-50 border-gray-200'
             }`}>
               <div className="space-y-5">
-                <div className="flex items-center gap-2 mb-5">
-                  <Lock className={`w-4 h-4 ${
-                    theme === 'dark' ? 'text-yellow-400' : 'text-yellow-600'
-                  }`} />
-                  <h4 className={`text-sm font-semibold ${
-                    theme === 'dark' ? 'text-gray-100' : 'text-gray-900'
-                  }`}>API Credentials</h4>
+                <div className="flex items-center justify-between mb-5">
+                  <div className="flex items-center gap-2">
+                    <Globe className={`w-4 h-4 ${
+                      theme === 'dark' ? 'text-green-400' : 'text-green-600'
+                    }`} />
+                    <h4 className={`text-sm font-semibold ${
+                      theme === 'dark' ? 'text-gray-100' : 'text-gray-900'
+                    }`}>Connected Sources</h4>
+                  </div>
+                  <span className={`text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
+                    {sources.length} source{sources.length !== 1 ? 's' : ''}
+                  </span>
                 </div>
-                <div className="space-y-2">
-                  <label className={`block ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
-                    <span className="flex items-center gap-2 font-medium text-sm">
-                      <Lock className="w-3 h-3" />
-                      API Key
-                    </span>
-                  </label>
-                  <input
-                    type="password"
-                    value={config.apiKey || ''}
-                    onChange={(e) => setConfig({ ...config, apiKey: e.target.value })}
-                    placeholder="Enter API key"
-                    className={`input input-bordered w-full py-2.5 px-4 ${
-                      theme === 'dark' 
-                        ? 'bg-gray-700 border-gray-600 text-white' 
-                        : 'bg-white border-gray-300 text-gray-900'
-                    } focus:outline-none focus:ring-2 focus:ring-blue-500`}
-                  />
-                  {errors.apiKey && <p className="text-error text-xs mt-2">{errors.apiKey}</p>}
+                
+                {sources.length > 0 && (
+                  <div className="space-y-2">
+                    {sources.map((source) => (
+                      <div key={source.id} className={`flex items-center justify-between p-3 rounded-lg border ${
+                        theme === 'dark' 
+                          ? 'bg-gray-800 border-gray-600' 
+                          : 'bg-white border-gray-300'
+                      }`}>
+                        <div className="flex-1">
+                          <div className="font-medium text-sm">{source.name}</div>
+                          <div className={`text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
+                            {source.type === 'bitrix24' && 'Битрикс24'}
+                            {source.type === 'amocrm' && 'AmoCRM'}
+                            {source.type === 'yandex' && 'Яндекс Трекер'}
+                            {source.type === 'google' && 'Google Calendar'}
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => removeSource(source.id)}
+                          className="p-2 hover:bg-red-100 dark:hover:bg-red-900/20 rounded transition-colors"
+                        >
+                          <Trash2 className="w-4 h-4 text-red-600 dark:text-red-400" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                
+                <div className="space-y-3 pt-3 border-t border-gray-200 dark:border-gray-600">
+                  <div className="text-sm font-medium">Add New Source</div>
+                  <div className="space-y-2">
+                    <SelectComponent
+                      value={newSource.type}
+                      onValueChange={(value) => setNewSource({ ...newSource, type: value })}
+                      options={[
+                        { value: 'bitrix24', label: 'Битрикс24' },
+                        { value: 'amocrm', label: 'AmoCRM' },
+                        { value: 'yandex', label: 'Яндекс Трекер' },
+                        { value: 'google', label: 'Google Calendar' }
+                      ]}
+                      placeholder="Select source type"
+                      theme={theme}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <input
+                      type="text"
+                      value={newSource.name}
+                      onChange={(e) => setNewSource({ ...newSource, name: e.target.value })}
+                      placeholder="Source name (e.g., 'Work Google Calendar')"
+                      className={`w-full py-2.5 px-4 rounded-lg border ${
+                        theme === 'dark' 
+                          ? 'bg-gray-700 border-gray-600 text-white' 
+                          : 'bg-white border-gray-300 text-gray-900'
+                      } focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <input
+                      type="password"
+                      value={newSource.apiKey}
+                      onChange={(e) => setNewSource({ ...newSource, apiKey: e.target.value })}
+                      placeholder="API Key"
+                      className={`w-full py-2.5 px-4 rounded-lg border ${
+                        theme === 'dark' 
+                          ? 'bg-gray-700 border-gray-600 text-white' 
+                          : 'bg-white border-gray-300 text-gray-900'
+                      } focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={addSource}
+                    disabled={!newSource.type || !newSource.apiKey || !newSource.name}
+                    className="w-full py-2.5 px-4 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white rounded-lg flex items-center justify-center gap-2 transition-colors"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Add Source
+                  </button>
                 </div>
+                
+                <p className={`text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
+                  <strong>Note:</strong> Events from all connected sources will be aggregated and displayed chronologically. You can add events manually even without connecting any API sources.
+                </p>
               </div>
             </div>
 
@@ -1174,13 +1255,13 @@ export default function WidgetConfigModal({ widget, open, onOpenChange, onSave }
                   }`} />
                   <h4 className={`text-sm font-semibold ${
                     theme === 'dark' ? 'text-gray-100' : 'text-gray-900'
-                  }`}>Campaign Settings</h4>
+                  }`}>Настройки кампаний</h4>
                 </div>
                 <div className="space-y-2">
                   <label className={`block ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
                     <span className="flex items-center gap-2 font-medium text-sm">
                       <Zap className="w-3 h-3" />
-                      Campaign Selection
+                      Выбор кампаний
                     </span>
                   </label>
                   <input
@@ -1200,6 +1281,230 @@ export default function WidgetConfigModal({ widget, open, onOpenChange, onSave }
           </form>
         );
 
+      case 'news':
+        return (
+          <form id="widget-config-form" onSubmit={handleSubmit} className="space-y-5">
+            <div className={`p-6 rounded-xl border ${
+              theme === 'dark' 
+                ? 'bg-gray-700/30 border-gray-600/50' 
+                : 'bg-gray-50 border-gray-200'
+            }`}>
+              <div className="space-y-5">
+                <div className="flex items-center gap-2 mb-5">
+                  <Newspaper className={`w-4 h-4 ${
+                    theme === 'dark' ? 'text-blue-400' : 'text-blue-600'
+                  }`} />
+                  <h4 className={`text-sm font-semibold ${
+                    theme === 'dark' ? 'text-gray-100' : 'text-gray-900'
+                  }`}>News Configuration</h4>
+                </div>
+                
+                <div className="space-y-2">
+                  <label className={`block ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
+                    <span className="flex items-center gap-2 font-medium text-sm">
+                      Widget Name
+                    </span>
+                  </label>
+                  <input
+                    type="text"
+                    value={config.name || ''}
+                    onChange={(e) => setConfig({ ...config, name: e.target.value })}
+                    placeholder="Enter widget name (e.g., 'Tech News')"
+                    className={`input input-bordered w-full py-2.5 px-4 ${
+                      theme === 'dark' 
+                        ? 'bg-gray-700 border-gray-600 text-white' 
+                        : 'bg-white border-gray-300 text-gray-900'
+                    } focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className={`block ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
+                    <span className="flex items-center gap-2 font-medium text-sm">
+                      <Target className="w-3 h-3" />
+                      News Themes
+                    </span>
+                  </label>
+                  <p className={`text-xs mb-2 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
+                    Select topics you're interested in (select multiple)
+                  </p>
+                  <div className="grid grid-cols-2 gap-2">
+                    {['Технологии', 'Бизнес', 'Политика', 'Наука', 'Здравоохранение', 'Спорт', 'Развлечения', 'Мировые новости'].map((theme_option) => (
+                      <label 
+                        key={theme_option}
+                        className={`flex items-center gap-2 p-2 rounded-lg border cursor-pointer transition-colors ${
+                          (config.themes || []).includes(theme_option)
+                            ? theme === 'dark'
+                              ? 'bg-blue-500/20 border-blue-500'
+                              : 'bg-blue-50 border-blue-500'
+                            : theme === 'dark'
+                              ? 'bg-gray-700/50 border-gray-600 hover:border-gray-500'
+                              : 'bg-white border-gray-300 hover:border-gray-400'
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={(config.themes || []).includes(theme_option)}
+                          onChange={(e) => {
+                            const newThemes = e.target.checked
+                              ? [...(config.themes || []), theme_option]
+                              : (config.themes || []).filter(t => t !== theme_option);
+                            setConfig({ ...config, themes: newThemes });
+                          }}
+                          className="w-4 h-4"
+                        />
+                        <span className={`text-sm ${
+                          theme === 'dark' ? 'text-gray-200' : 'text-gray-900'
+                        }`}>
+                          {theme_option}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                  {errors.themes && <p className="text-error text-xs mt-2">{errors.themes}</p>}
+                </div>
+
+                <div className="space-y-2">
+                  <label className={`block ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
+                    <span className="flex items-center gap-2 font-medium text-sm">
+                      Custom Theme (Optional)
+                    </span>
+                  </label>
+                  <input
+                    type="text"
+                    value={config.customTheme || ''}
+                    onChange={(e) => setConfig({ ...config, customTheme: e.target.value })}
+                    placeholder="e.g., 'Artificial Intelligence', 'Climate Change'"
+                    className={`input input-bordered w-full py-2.5 px-4 ${
+                      theme === 'dark' 
+                        ? 'bg-gray-700 border-gray-600 text-white' 
+                        : 'bg-white border-gray-300 text-gray-900'
+                    } focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                  />
+                  <p className={`text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
+                    Add your own custom news theme not listed above
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className={`p-6 rounded-xl border ${
+              theme === 'dark' 
+                ? 'bg-gray-700/30 border-gray-600/50' 
+                : 'bg-gray-50 border-gray-200'
+            }`}>
+              <div className="space-y-5">
+                <div className="flex items-center gap-2 mb-5">
+                  <Globe className={`w-4 h-4 ${
+                    theme === 'dark' ? 'text-blue-400' : 'text-blue-600'
+                  }`} />
+                  <h4 className={`text-sm font-semibold ${
+                    theme === 'dark' ? 'text-gray-100' : 'text-gray-900'
+                  }`}>News Sources</h4>
+                </div>
+                
+                <div className="space-y-2">
+                  <label className={`block ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
+                    <span className="flex items-center gap-2 font-medium text-sm">
+                      Select News Agencies
+                    </span>
+                  </label>
+                  <p className={`text-xs mb-2 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
+                    Choose which news sources to follow
+                  </p>
+                  <div className="space-y-2">
+                    <label 
+                      className={`flex items-center gap-2 p-3 rounded-lg border cursor-pointer transition-colors ${
+                        (config.agencies || []).includes('all')
+                          ? theme === 'dark'
+                            ? 'bg-indigo-500/20 border-indigo-500'
+                            : 'bg-indigo-50 border-indigo-500'
+                          : theme === 'dark'
+                            ? 'bg-gray-700/50 border-gray-600 hover:border-gray-500'
+                            : 'bg-white border-gray-300 hover:border-gray-400'
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={(config.agencies || []).includes('all')}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setConfig({ ...config, agencies: ['all'] });
+                          } else {
+                            setConfig({ ...config, agencies: [] });
+                          }
+                        }}
+                        className="w-4 h-4"
+                      />
+                      <span className={`text-sm font-semibold ${
+                        theme === 'dark' ? 'text-gray-200' : 'text-gray-900'
+                      }`}>
+                        All Sources
+                      </span>
+                    </label>
+                    
+                    <div className="grid grid-cols-2 gap-2">
+                      {[
+                        { id: 'bbc', name: 'BBC News' },
+                        { id: 'cnn', name: 'CNN' },
+                        { id: 'reuters', name: 'Reuters' },
+                        { id: 'ap', name: 'Associated Press' },
+                        { id: 'bloomberg', name: 'Bloomberg' },
+                        { id: 'techcrunch', name: 'TechCrunch' },
+                        { id: 'theverge', name: 'The Verge' }
+                      ].map((agency) => (
+                        <label 
+                          key={agency.id}
+                          className={`flex items-center gap-2 p-2 rounded-lg border cursor-pointer transition-colors ${
+                            (config.agencies || []).includes(agency.id)
+                              ? theme === 'dark'
+                                ? 'bg-blue-500/20 border-blue-500'
+                                : 'bg-blue-50 border-blue-500'
+                              : theme === 'dark'
+                                ? 'bg-gray-700/50 border-gray-600 hover:border-gray-500'
+                                : 'bg-white border-gray-300 hover:border-gray-400'
+                          }`}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={(config.agencies || []).includes(agency.id)}
+                            disabled={(config.agencies || []).includes('all')}
+                            onChange={(e) => {
+                              const newAgencies = e.target.checked
+                                ? [...(config.agencies || []).filter(a => a !== 'all'), agency.id]
+                                : (config.agencies || []).filter(a => a !== agency.id);
+                              setConfig({ ...config, agencies: newAgencies });
+                            }}
+                            className="w-4 h-4"
+                          />
+                          <span className={`text-sm ${
+                            theme === 'dark' ? 'text-gray-200' : 'text-gray-900'
+                          }`}>
+                            {agency.name}
+                          </span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                  {errors.agencies && <p className="text-error text-xs mt-2">{errors.agencies}</p>}
+                </div>
+              </div>
+            </div>
+
+            <div className={`p-4 rounded-xl border ${
+              theme === 'dark' 
+                ? 'bg-blue-900/20 border-blue-800' 
+                : 'bg-blue-50 border-blue-200'
+            }`}>
+              <p className={`text-xs ${
+                theme === 'dark' ? 'text-blue-300' : 'text-blue-700'
+              }`}>
+                💡 Tip: Select "All Sources" to see news from all agencies, or choose specific ones for a curated feed.
+              </p>
+            </div>
+          </form>
+        );
+
       default:
         return <div className="text-sm text-gray-500">No configuration options available for this widget type.</div>;
     }
@@ -1209,7 +1514,7 @@ export default function WidgetConfigModal({ widget, open, onOpenChange, onSave }
     <Modal
       open={open}
       onOpenChange={onOpenChange}
-      title={`${widget.type.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')} Settings`}
+      title={`${widget.type.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')} Настройки`}
     >
       {renderConfigForm()}
     </Modal>

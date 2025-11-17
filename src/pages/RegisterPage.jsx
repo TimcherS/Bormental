@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { BarChart3, ArrowLeft } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
+import Logo from '../components/Logo';
 
 export default function RegisterPage() {
   const { theme, toggleTheme } = useTheme();
@@ -38,19 +39,23 @@ export default function RegisterPage() {
       <div className="w-full max-w-7xl mx-auto px-6">
         <Link
           to="/"
-          className="fixed top-4 left-4 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-900 transition-colors flex items-center gap-2 z-10"
+          className={`fixed top-4 left-4 p-2 rounded-lg transition-colors flex items-center gap-2 z-10 ${
+            theme === 'dark'
+              ? 'hover:bg-gray-900 text-white'
+              : 'hover:bg-gray-100 text-gray-900'
+          }`}
           aria-label="Back to home"
         >
           <ArrowLeft className="w-5 h-5" />
-          <span className="text-sm">Back</span>
+          <span className="text-sm">Назад</span>
         </Link>
 
         <button
           onClick={toggleTheme}
-          className={`fixed top-4 right-4 z-10 rounded-full border px-3 py-1 text-xs font-semibold shadow-sm transition-colors hover:bg-white dark:hover:bg-gray-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 ${
+          className={`fixed top-4 right-4 z-10 p-2 rounded-lg border backdrop-blur-md transition-smooth btn-hover-lift ${
             theme === 'dark'
-              ? 'border-gray-700 bg-gray-900/80 text-white'
-              : 'border-gray-200 bg-white/80 text-gray-900'
+              ? 'bg-black/50 border-gray-700/50 hover:bg-gray-900/50'
+              : 'bg-white/50 border-gray-300/50 hover:bg-gray-50/80'
           }`}
           aria-label="Toggle theme"
           title="Toggle theme"
@@ -60,17 +65,20 @@ export default function RegisterPage() {
 
         <div className="w-full max-w-md mx-auto">
         <div className="text-center mb-10">
-          <Link to="/" className="inline-flex items-center gap-2 text-2xl font-semibold mb-4 hover:opacity-80 transition-opacity">
-            <BarChart3 className="w-8 h-8" />
-            Business Copilot
+          <Link to="/" className="inline-flex hover:opacity-80 transition-opacity mb-4">
+            <Logo showText={true} textClassName="text-2xl font-semibold" />
           </Link>
-          <h1 className="text-3xl font-bold mt-6 mb-2">Create your account</h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-3 leading-relaxed">
-            Start managing your business in minutes
+          <h1 className="text-3xl font-bold mt-6 mb-2">Создайте аккаунт</h1>
+          <p className={`mt-3 leading-relaxed ${
+            theme === 'dark' ? 'text-gray-400' : 'text-gray-700'
+          }`}>
+            Начните управлять бизнесом за минуты
           </p>
           <div className="mt-4 px-4 py-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl transition-colors duration-300">
-            <p className="text-sm text-blue-700 dark:text-blue-300 font-medium">
-              🎭 Demo Mode: Enter any details or use quick demo registration
+            <p className={`text-sm font-medium ${
+              theme === 'dark' ? 'text-blue-200' : 'text-blue-900'
+            }`}>
+              🎭 Демо-режим: Введите любые данные или используйте быструю регистрацию
             </p>
           </div>
         </div>
@@ -84,9 +92,11 @@ export default function RegisterPage() {
             <div>
               <label
                 htmlFor="name"
-                className="mb-2 block text-sm font-semibold text-gray-700 dark:text-gray-200"
+                className={`mb-2 block text-sm font-semibold ${
+                  theme === 'dark' ? 'text-gray-200' : 'text-gray-800'
+                }`}
               >
-                Full Name
+                Полное имя
               </label>
               <input
                 id="name"
@@ -95,16 +105,18 @@ export default function RegisterPage() {
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 className="input input-bordered w-full"
-                placeholder="John Doe"
+                placeholder="Иван Иванов"
               />
             </div>
 
             <div>
               <label
                 htmlFor="email"
-                className="mb-2 block text-sm font-semibold text-gray-700 dark:text-gray-200"
+                className={`mb-2 block text-sm font-semibold ${
+                  theme === 'dark' ? 'text-gray-200' : 'text-gray-800'
+                }`}
               >
-                Email Address
+                Email адрес
               </label>
               <input
                 id="email"
@@ -113,16 +125,18 @@ export default function RegisterPage() {
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 className="input input-bordered w-full"
-                placeholder="you@example.com"
+                placeholder="вы@example.com"
               />
             </div>
 
             <div>
               <label
                 htmlFor="password"
-                className="mb-2 block text-sm font-semibold text-gray-700 dark:text-gray-200"
+                className={`mb-2 block text-sm font-semibold ${
+                  theme === 'dark' ? 'text-gray-200' : 'text-gray-800'
+                }`}
               >
-                Password
+                Пароль
               </label>
               <input
                 id="password"
@@ -138,9 +152,11 @@ export default function RegisterPage() {
             <div>
               <label
                 htmlFor="confirmPassword"
-                className="mb-2 block text-sm font-semibold text-gray-700 dark:text-gray-200"
+                className={`mb-2 block text-sm font-semibold ${
+                  theme === 'dark' ? 'text-gray-200' : 'text-gray-800'
+                }`}
               >
-                Confirm Password
+                Подтвердите пароль
               </label>
               <input
                 id="confirmPassword"
@@ -157,7 +173,7 @@ export default function RegisterPage() {
               type="submit"
               className="mt-6 w-full rounded-2xl bg-blue-600 px-5 py-3 font-semibold text-white shadow-lg shadow-blue-500/20 transition hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-gray-900"
             >
-              Create Account
+              Создать аккаунт
             </button>
           </form>
 
@@ -166,23 +182,29 @@ export default function RegisterPage() {
               <div className={`w-full h-px ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-300'}`}></div>
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className={`px-2 ${theme === 'dark' ? 'bg-gray-900/50' : 'bg-gray-50'} text-gray-600 dark:text-gray-400`}>
-                or
+              <span className={`px-2 ${
+                theme === 'dark' ? 'bg-gray-900/50 text-gray-400' : 'bg-gray-50 text-gray-700'
+              }`}>
+                или
               </span>
             </div>
           </div>
 
           <button
             onClick={handleDemoRegister}
-            className="w-full rounded-2xl border border-gray-300 px-5 py-3 font-semibold text-gray-700 transition hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-300 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-800 dark:focus-visible:ring-gray-600 dark:focus-visible:ring-offset-gray-900"
+            className={`w-full rounded-2xl border px-5 py-3 font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${
+              theme === 'dark'
+                ? 'border-gray-600 text-gray-200 hover:bg-gray-800 focus-visible:ring-gray-600 focus-visible:ring-offset-gray-900'
+                : 'border-gray-300 text-gray-800 hover:bg-gray-50 focus-visible:ring-gray-300 focus-visible:ring-offset-white'
+            }`}
           >
-            Quick Demo Registration
+            Быстрая демо-регистрация
           </button>
 
           <div className="mt-8 text-center text-sm">
-            <span className="text-gray-600 dark:text-gray-400">Already have an account? </span>
+            <span className={theme === 'dark' ? 'text-gray-400' : 'text-gray-700'}>Уже есть аккаунт? </span>
             <Link to="/login" className="font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors">
-              Sign in
+              Войти
             </Link>
           </div>
         </div>

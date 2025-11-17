@@ -1,15 +1,16 @@
-import { MessageSquare, Mail, Calendar, TrendingUp, BarChart3, Megaphone, Bot, FileText } from 'lucide-react';
+import { MessageSquare, Mail, Calendar, TrendingUp, BarChart3, Megaphone, Bot, FileText, Newspaper } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
 
 const widgetTypes = [
-  { id: 'social-media', icon: MessageSquare, label: 'Social Media', color: 'bg-blue-500' },
-  { id: 'email', icon: Mail, label: 'Email Analysis', color: 'bg-green-500' },
-  { id: 'calendar', icon: Calendar, label: 'Calendar', color: 'bg-purple-500' },
-  { id: 'revenue', icon: TrendingUp, label: 'Revenue Tracking', color: 'bg-yellow-500' },
-  { id: 'chart', icon: BarChart3, label: 'Custom Chart', color: 'bg-pink-500' },
-  { id: 'marketing', icon: Megaphone, label: 'Marketing Stats', color: 'bg-orange-500' },
-  { id: 'chatgpt', icon: Bot, label: 'AI Workplace', color: 'bg-violet-500' },
-  { id: 'note', icon: FileText, label: 'Note', color: 'bg-gray-500' }
+  { id: 'social-media', icon: MessageSquare, label: 'Соцсети', color: 'bg-blue-500' },
+  { id: 'email', icon: Mail, label: 'Анализ почты', color: 'bg-green-500' },
+  { id: 'calendar', icon: Calendar, label: 'Календарь', color: 'bg-purple-500' },
+  { id: 'revenue', icon: TrendingUp, label: 'Отслеживание доходов', color: 'bg-yellow-500' },
+  { id: 'chart', icon: BarChart3, label: 'График', color: 'bg-pink-500' },
+  { id: 'marketing', icon: Megaphone, label: 'Маркетинговая аналитика', color: 'bg-orange-500' },
+  { id: 'chatgpt', icon: Bot, label: 'ИИ-помощник', color: 'bg-violet-500' },
+  { id: 'note', icon: FileText, label: 'Заметка', color: 'bg-gray-500' },
+  { id: 'news', icon: Newspaper, label: 'Анализ новостей', color: 'bg-indigo-500' }
 ];
 
 export default function WidgetSelector({ onSelect, onClose }) {

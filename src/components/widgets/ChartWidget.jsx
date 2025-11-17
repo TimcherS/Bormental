@@ -21,8 +21,8 @@ export default function ChartWidget({ config, isFullscreen = false }) {
 
   const chartType = config?.chartType || 'area';
   const dataSource = config?.dataSource || 'mock-revenue';
-  const title = config?.title || 'Revenue Trend';
-  const yLabel = config?.yLabel || 'Value';
+  const title = config?.title || 'Динамика доходов';
+  const yLabel = config?.yLabel || 'Значение';
   const color = config?.color || '#8884d8';
 
   // Select data key based on data source
@@ -45,7 +45,7 @@ export default function ChartWidget({ config, isFullscreen = false }) {
   const renderChart = () => {
     const commonProps = {
       data,
-      margin: { top: 5, right: 30, left: 20, bottom: 5 }
+      margin: { top: 5, right: 30, left: 0, bottom: 5 }
     };
 
     switch (chartType) {
@@ -54,7 +54,7 @@ export default function ChartWidget({ config, isFullscreen = false }) {
           <AreaChart {...commonProps}>
             <CartesianGrid strokeDasharray="3 3" stroke={theme === 'dark' ? '#374151' : '#e5e7eb'} />
             <XAxis dataKey="name" stroke={theme === 'dark' ? '#9ca3af' : '#6b7280'} />
-            <YAxis stroke={theme === 'dark' ? '#9ca3af' : '#6b7280'} label={{ value: yLabel, angle: -90, position: 'insideLeft' }} />
+            <YAxis stroke={theme === 'dark' ? '#9ca3af' : '#6b7280'} width={45} />
             <Tooltip
               contentStyle={{
                 backgroundColor: theme === 'dark' ? '#1f2937' : '#ffffff',
@@ -76,7 +76,7 @@ export default function ChartWidget({ config, isFullscreen = false }) {
           <BarChart {...commonProps}>
             <CartesianGrid strokeDasharray="3 3" stroke={theme === 'dark' ? '#374151' : '#e5e7eb'} />
             <XAxis dataKey="name" stroke={theme === 'dark' ? '#9ca3af' : '#6b7280'} />
-            <YAxis stroke={theme === 'dark' ? '#9ca3af' : '#6b7280'} label={{ value: yLabel, angle: -90, position: 'insideLeft' }} />
+            <YAxis stroke={theme === 'dark' ? '#9ca3af' : '#6b7280'} width={45} />
             <Tooltip
               contentStyle={{
                 backgroundColor: theme === 'dark' ? '#1f2937' : '#ffffff',
@@ -119,7 +119,7 @@ export default function ChartWidget({ config, isFullscreen = false }) {
           <LineChart {...commonProps}>
             <CartesianGrid strokeDasharray="3 3" stroke={theme === 'dark' ? '#374151' : '#e5e7eb'} />
             <XAxis dataKey="name" stroke={theme === 'dark' ? '#9ca3af' : '#6b7280'} />
-            <YAxis stroke={theme === 'dark' ? '#9ca3af' : '#6b7280'} label={{ value: yLabel, angle: -90, position: 'insideLeft' }} />
+            <YAxis stroke={theme === 'dark' ? '#9ca3af' : '#6b7280'} width={45} />
             <Tooltip
               contentStyle={{
                 backgroundColor: theme === 'dark' ? '#1f2937' : '#ffffff',
@@ -144,14 +144,6 @@ export default function ChartWidget({ config, isFullscreen = false }) {
 
   return (
     <div className={`h-full flex flex-col ${isFullscreen ? 'p-6' : 'p-2'}`}>
-      <div className="mb-2 flex-shrink-0">
-        <h3 className={`${isFullscreen ? 'text-xl' : 'text-sm'} font-medium text-gray-900 dark:text-gray-100`}>
-          {title}
-        </h3>
-        <p className={`${isFullscreen ? 'text-base' : 'text-xs'} text-gray-600 dark:text-gray-400`}>
-          Monthly performance
-        </p>
-      </div>
       <div className="flex-1 min-h-0 [&_*]:outline-none [&_*:focus]:outline-none">
         {isLoading ? (
           <div className="h-full flex flex-col justify-center">

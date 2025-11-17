@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { Trash2, Settings, GripVertical, Maximize2, X, AlertTriangle } from 'lucide-react';
+import { Trash2, Settings, GripVertical, Maximize2, X, AlertTriangle, Cable } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
 import SocialMediaWidget from './widgets/SocialMediaWidget';
 import EmailWidget from './widgets/EmailWidget';
@@ -9,15 +9,17 @@ import ChartWidget from './widgets/ChartWidget';
 import MarketingWidget from './widgets/MarketingWidget';
 import ChatGPTWidget from './widgets/ChatGPTWidget';
 import NoteWidget from './widgets/NoteWidget';
+import NewsWidget from './widgets/NewsWidget';
 import WidgetConfigModal from './WidgetConfigModal';
 import Portal from './Portal';
 import openaiService from '../services/openai.js';
 
-export default function Widget({ widget, isSelected, onSelect, onUpdate, onDelete, gridSize, pan, zoom }) {
+export default function Widget({ widget, isSelected, onSelect, onUpdate, onDelete, gridSize, pan, zoom, onStartConnection, isConnectionMode, isConnectionTarget }) {
   const { theme } = useTheme();
   const [isDragging, setIsDragging] = useState(false);
   const [isResizing, setIsResizing] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
+  const [isBorderHovered, setIsBorderHovered] = useState(false);
   const [resizeType, setResizeType] = useState(null);
   const [dragPosition, setDragPosition] = useState({ x: 0, y: 0 });
   const [isConfigModalOpen, setIsConfigModalOpen] = useState(false);
@@ -35,7 +37,22 @@ export default function Widget({ widget, isSelected, onSelect, onUpdate, onDelet
   }, [gridSize]);
 
   const handleInteractionStart = useCallback((clientX, clientY, e) => {
-    if (e.target.closest('.widget-resize-handle') || e.target.closest('.widget-config') || e.target.closest('.widget-delete') || e.target.closest('.widget-fullscreen')) {
+    // Don't start dragging if clicking on buttons, inputs, or interactive elements
+    if (e.target.closest('.widget-resize-handle') || 
+        e.target.closest('.widget-config') || 
+        e.target.closest('.widget-delete') || 
+        e.target.closest('.widget-fullscreen') ||
+        e.target.closest('.widget-connect-btn') ||
+        e.target.closest('button') ||
+        e.target.closest('input') ||
+        e.target.closest('textarea') ||
+        e.target.closest('select') ||
+        e.target.closest('a') ||
+        e.target.tagName === 'BUTTON' ||
+        e.target.tagName === 'INPUT' ||
+        e.target.tagName === 'TEXTAREA' ||
+        e.target.tagName === 'SELECT' ||
+        e.target.tagName === 'A') {
       return;
     }
 
@@ -329,10 +346,11 @@ export default function Widget({ widget, isSelected, onSelect, onUpdate, onDelet
         return <ChatGPTWidget config={widget.config} isFullscreen={isFullscreen} onUpdate={(updates) => onUpdate({ config: { ...widget.config, ...updates } })} />;
       case 'social-media': return <SocialMediaWidget config={widget.config} isFullscreen={isFullscreen} />;
       case 'email': return <EmailWidget config={widget.config} isFullscreen={isFullscreen} />;
-      case 'calendar': return <CalendarWidget widget={widget} isFullscreen={isFullscreen} onUpdate={(updates) => onUpdate({ config: { ...widget.config, ...updates } })} />;
+      case 'calendar': return <CalendarWidget widget={widget} isFullscreen={isFullscreen} onUpdate={(updates) => onUpdate({ config: { ...widget.config, ...updates } })} fullscreenView={widget.config.fullscreenView} setFullscreenView={(view) => onUpdate({ config: { ...widget.config, fullscreenView: view } })} />;
       case 'revenue': return <RevenueWidget config={widget.config} isFullscreen={isFullscreen} />;
       case 'chart': return <ChartWidget config={widget.config} isFullscreen={isFullscreen} />;
       case 'marketing': return <MarketingWidget config={widget.config} isFullscreen={isFullscreen} />;
+      case 'news': return <NewsWidget config={widget.config} isFullscreen={isFullscreen} />;
       default: return <div>Unknown widget type</div>;
     }
   };
@@ -344,6 +362,8 @@ export default function Widget({ widget, isSelected, onSelect, onUpdate, onDelet
     zIndex: isSelected ? 10 : 1,
     boxShadow: isSelected
       ? (theme === 'dark' ? '0 0 0 2px rgba(59, 130, 246, 0.6)' : '0 0 0 2px rgba(37, 99, 235, 0.6)')
+      : isConnectionTarget
+      ? (theme === 'dark' ? '0 0 0 3px rgba(16, 185, 129, 0.6), 0 0 20px rgba(16, 185, 129, 0.4)' : '0 0 0 3px rgba(5, 150, 105, 0.6), 0 0 20px rgba(5, 150, 105, 0.3)')
       : '0 2px 8px rgba(0,0,0,0.1)',
   };
 
@@ -427,6 +447,23 @@ export default function Widget({ widget, isSelected, onSelect, onUpdate, onDelet
         onMouseLeave={() => {
           if (!isResizing) {
             setIsHovered(false);
+            setIsBorderHovered(false);
+          }
+        }}
+        onMouseMove={(e) => {
+          if (!isResizing && isSelected) {
+            const rect = e.currentTarget.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            const borderThreshold = 20; // pixels from edge
+            
+            const isNearBorder = 
+              x < borderThreshold || 
+              x > rect.width - borderThreshold || 
+              y < borderThreshold || 
+              y > rect.height - borderThreshold;
+            
+            setIsBorderHovered(isNearBorder);
           }
         }}
       >
@@ -436,7 +473,36 @@ export default function Widget({ widget, isSelected, onSelect, onUpdate, onDelet
             : 'border-gray-200 bg-gradient-to-r from-gray-50/40 via-transparent to-transparent'
         }`}>
           <div className="flex items-center gap-2">
-            <div className="cursor-grab active:cursor-grabbing p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-smooth">
+            {/* Connection Icon - Only show if not in connection mode and not the AI workspace */}
+            {!isConnectionMode && widget.type !== 'chatgpt' && (
+              <button
+                className="p-1 rounded transition-smooth hover:bg-green-500/20 text-gray-400 hover:text-green-500 widget-connect-btn"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (onStartConnection) {
+                    onStartConnection(widget.id);
+                  }
+                }}
+                title="Connect to AI Workspace"
+              >
+                <Cable size={16} />
+              </button>
+            )}
+            
+            <div 
+              className="cursor-grab active:cursor-grabbing p-1 rounded transition-smooth"
+              style={theme === 'light' ? {} : { ':hover': { backgroundColor: 'rgba(55, 65, 81, 0.5)' } }}
+              onMouseEnter={(e) => {
+                if (theme === 'dark') {
+                  e.currentTarget.style.backgroundColor = 'rgba(55, 65, 81, 0.5)';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (theme === 'dark') {
+                  e.currentTarget.style.backgroundColor = '';
+                }
+              }}
+            >
               <GripVertical size={16} className="text-gray-400 dark:text-gray-500" />
             </div>
             <h3 className={`text-sm font-semibold capitalize ${
@@ -452,7 +518,7 @@ export default function Widget({ widget, isSelected, onSelect, onUpdate, onDelet
                 e.stopPropagation();
                 setIsConfigModalOpen(true);
               }}
-              title="Configure"
+              title="Настроить"
             >
               <Settings size={16} />
             </button>
@@ -462,7 +528,7 @@ export default function Widget({ widget, isSelected, onSelect, onUpdate, onDelet
                 e.stopPropagation();
                 setIsFullscreen(true);
               }}
-              title="Fullscreen"
+              title="Во весь экран"
             >
               <Maximize2 size={16} />
             </button>
@@ -472,7 +538,7 @@ export default function Widget({ widget, isSelected, onSelect, onUpdate, onDelet
                 e.stopPropagation();
                 setIsDeleteConfirmOpen(true);
               }}
-              title="Delete"
+              title="Удалить"
             >
               <Trash2 size={16} />
             </button>
@@ -481,7 +547,7 @@ export default function Widget({ widget, isSelected, onSelect, onUpdate, onDelet
         <div className="flex-1 overflow-hidden flex flex-col min-h-0">
           {renderWidgetContent()}
         </div>
-        {isSelected && (isHovered || isResizing) && (
+        {isSelected && (isBorderHovered || isResizing) && (
           <>
             {/* Corner handles */}
             {/* Bottom-right */}
@@ -643,18 +709,18 @@ export default function Widget({ widget, isSelected, onSelect, onUpdate, onDelet
               <div className="flex items-center gap-3 mb-4">
                 <AlertTriangle className="text-red-500" size={24} />
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                  Delete Widget
+                  Удалить виджет
                 </h3>
               </div>
               <p className="text-gray-600 dark:text-gray-400 mb-6">
-                Are you sure you want to delete this widget? This action cannot be undone.
+                Вы уверены, что хотите удалить этот виджет? Это действие нельзя отменить.
               </p>
               <div className="flex gap-3 justify-end">
                 <button
                   onClick={() => setIsDeleteConfirmOpen(false)}
                   className="px-4 py-2 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
                 >
-                  Cancel
+                  Отмена
                 </button>
                 <button
                   onClick={() => {
@@ -663,7 +729,7 @@ export default function Widget({ widget, isSelected, onSelect, onUpdate, onDelet
                   }}
                   className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
                 >
-                  Delete
+                  Удалить
                 </button>
               </div>
             </div>

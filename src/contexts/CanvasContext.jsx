@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 
 const CanvasContext = createContext();
 
@@ -9,7 +9,7 @@ export function CanvasProvider({ children }) {
       return saved ? JSON.parse(saved) : [
         {
           id: '1',
-          name: 'Main Dashboard',
+          name: 'Главная панель',
           widgets: [
             {
               id: 'demo1',
@@ -18,7 +18,7 @@ export function CanvasProvider({ children }) {
               y: 50,
               width: 300,
               height: 200,
-              config: { content: 'Welcome to Business Copilot!\n\nThis is a demo dashboard with sample widgets.' }
+              config: { content: 'Добро пожаловать в Business Copilot!\n\nЭто демо-панель с примерными виджетами.' }
             },
             {
               id: 'demo2',
@@ -38,7 +38,8 @@ export function CanvasProvider({ children }) {
               height: 200,
               config: {}
             }
-          ]
+          ],
+          connections: []
         }
       ];
     } catch (error) {
@@ -46,7 +47,7 @@ export function CanvasProvider({ children }) {
       return [
         {
           id: '1',
-          name: 'Main Dashboard',
+          name: 'Главная панель',
           widgets: [
             {
               id: 'demo1',
@@ -55,9 +56,10 @@ export function CanvasProvider({ children }) {
               y: 50,
               width: 300,
               height: 200,
-              config: { content: 'Welcome to Business Copilot!\n\nThis is a demo dashboard with sample widgets.' }
+              config: { content: 'Добро пожаловать в Business Copilot!\n\nЭто демо-панель с примерными виджетами.' }
             }
-          ]
+          ],
+          connections: []
         }
       ];
     }
@@ -66,7 +68,29 @@ export function CanvasProvider({ children }) {
   const [activeCanvasId, setActiveCanvasId] = useState(() => {
     try {
       const saved = localStorage.getItem('activeCanvasId');
-      return saved || '1';
+      const savedCanvases = localStorage.getItem('canvases');
+      let availableCanvases;
+      
+      try {
+        availableCanvases = savedCanvases ? JSON.parse(savedCanvases) : null;
+      } catch {
+        availableCanvases = null;
+      }
+      
+      // If we have saved canvases, validate that the saved activeCanvasId exists
+      if (availableCanvases && saved) {
+        const canvasExists = availableCanvases.some(c => c.id === saved);
+        if (canvasExists) {
+          return saved;
+        }
+      }
+      
+      // If no valid saved ID, use the first available canvas ID
+      if (availableCanvases && availableCanvases.length > 0) {
+        return availableCanvases[0].id;
+      }
+      
+      return '1'; // Default fallback
     } catch (error) {
       console.error('Error loading activeCanvasId from localStorage:', error);
       return '1';
@@ -145,11 +169,20 @@ export function CanvasProvider({ children }) {
 
   const activeCanvas = canvases.find(c => c.id === activeCanvasId);
 
+  // Ensure activeCanvasId always points to a valid canvas
+  useEffect(() => {
+    if (!activeCanvas && canvases.length > 0) {
+      console.warn('Active canvas not found, switching to first available canvas');
+      setActiveCanvasId(canvases[0].id);
+    }
+  }, [activeCanvas, canvases]);
+
   const addCanvas = (name) => {
     const newCanvas = {
       id: Date.now().toString(),
       name,
-      widgets: []
+      widgets: [],
+      connections: []
     };
     setCanvases(prev => [...prev, newCanvas]);
     return newCanvas.id;
@@ -192,9 +225,62 @@ export function CanvasProvider({ children }) {
   const deleteWidget = (widgetId) => {
     setCanvases(prev => prev.map(canvas =>
       canvas.id === activeCanvasId
-        ? { ...canvas, widgets: canvas.widgets.filter(w => w.id !== widgetId) }
+        ? { 
+            ...canvas, 
+            widgets: canvas.widgets.filter(w => w.id !== widgetId),
+            // Also remove all connections involving this widget
+            connections: (canvas.connections || []).filter(
+              conn => conn.sourceId !== widgetId && conn.targetId !== widgetId
+            )
+          }
         : canvas
     ));
+  };
+
+  // Connection management functions
+  const addConnection = (sourceId, targetId) => {
+    const newConnection = {
+      id: Date.now().toString(),
+      sourceId,
+      targetId,
+      createdAt: Date.now()
+    };
+    
+    setCanvases(prev => prev.map(canvas =>
+      canvas.id === activeCanvasId
+        ? { 
+            ...canvas, 
+            connections: [...(canvas.connections || []), newConnection] 
+          }
+        : canvas
+    ));
+    
+    return newConnection.id;
+  };
+
+  const removeConnection = (connectionId) => {
+    setCanvases(prev => prev.map(canvas =>
+      canvas.id === activeCanvasId
+        ? { 
+            ...canvas, 
+            connections: (canvas.connections || []).filter(c => c.id !== connectionId) 
+          }
+        : canvas
+    ));
+  };
+
+  const hasConnection = (sourceId, targetId) => {
+    if (!activeCanvas) return false;
+    return (activeCanvas.connections || []).some(
+      conn => conn.sourceId === sourceId && conn.targetId === targetId
+    );
+  };
+
+  const getWidgetConnections = (widgetId) => {
+    if (!activeCanvas) return [];
+    return (activeCanvas.connections || []).filter(
+      conn => conn.sourceId === widgetId || conn.targetId === widgetId
+    );
   };
 
   // History management for undo/redo
@@ -264,6 +350,55 @@ export function CanvasProvider({ children }) {
     setIsSidebarCollapsed(prev => !prev);
   };
 
+  // Canvas view state management (zoom and pan per canvas)
+  const [canvasViewStates, setCanvasViewStates] = useState(() => {
+    try {
+      const saved = localStorage.getItem('canvasViewStates');
+      return saved ? JSON.parse(saved) : {};
+    } catch (error) {
+      console.error('Error loading canvas view states:', error);
+      return {};
+    }
+  });
+
+  const canvasViewStatesRef = useRef(canvasViewStates);
+
+  useEffect(() => {
+    canvasViewStatesRef.current = canvasViewStates;
+  }, [canvasViewStates]);
+
+  // Save canvas view states to localStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem('canvasViewStates', JSON.stringify(canvasViewStates));
+    } catch (error) {
+      console.error('Error saving canvas view states:', error);
+    }
+  }, [canvasViewStates]);
+
+  const getCanvasViewState = useCallback((canvasId) => {
+    return canvasViewStatesRef.current[canvasId] || null;
+  }, []);
+
+  const updateCanvasViewState = useCallback((canvasId, viewState) => {
+    setCanvasViewStates(prev => {
+      const prevState = prev[canvasId];
+      if (
+        prevState &&
+        prevState.zoom === viewState.zoom &&
+        prevState.pan?.x === viewState.pan?.x &&
+        prevState.pan?.y === viewState.pan?.y
+      ) {
+        return prev;
+      }
+
+      return {
+        ...prev,
+        [canvasId]: viewState
+      };
+    });
+  }, []);
+
   return (
     <CanvasContext.Provider value={{
       canvases,
@@ -279,6 +414,10 @@ export function CanvasProvider({ children }) {
       updateWidget: updateWidgetWithHistory,
       deleteWidget: deleteWidgetWithHistory,
       duplicateWidget,
+      addConnection,
+      removeConnection,
+      hasConnection,
+      getWidgetConnections,
       undo,
       redo,
       canUndo: historyIndex > 0,
@@ -286,7 +425,9 @@ export function CanvasProvider({ children }) {
       sidebarWidth,
       setSidebarWidth,
       isSidebarCollapsed,
-      toggleSidebarCollapsed
+      toggleSidebarCollapsed,
+      getCanvasViewState,
+      updateCanvasViewState
     }}>
       {children}
     </CanvasContext.Provider>

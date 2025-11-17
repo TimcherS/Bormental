@@ -2,6 +2,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Plus, Trash2, BarChart3, Edit2 } from 'lucide-react';
 import { useCanvas } from '../contexts/CanvasContext';
 import { useTheme } from '../contexts/ThemeContext';
+import Logo from '../components/Logo';
 import { useState } from 'react';
 
 export default function CanvasSelectPage() {
@@ -45,10 +46,10 @@ export default function CanvasSelectPage() {
   const handleDeleteCanvas = (e, id) => {
     e.stopPropagation();
     if (canvases.length === 1) {
-      alert('Cannot delete the last canvas');
+      alert('Нельзя удалить последний холст');
       return;
     }
-    if (confirm('Are you sure you want to delete this canvas?')) {
+    if (confirm('Вы уверены, что хотите удалить этот холст?')) {
       deleteCanvas(id);
     }
   };
@@ -75,13 +76,12 @@ export default function CanvasSelectPage() {
       theme === 'dark' ? 'bg-black text-white' : 'bg-white text-black'
     }`}>
       {/* Navigation */}
-      <nav className="border-b border-gray-200 dark:border-gray-800">
+      <nav className={`border-b ${theme === 'dark' ? 'border-gray-800' : 'border-gray-300'}`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <div className="flex items-center gap-2">
-              <BarChart3 className="w-8 h-8" />
-              <span className="text-xl font-semibold">Business Copilot</span>
-            </div>
+            <Link to="/" className="hover:opacity-80 transition-opacity">
+              <Logo showText={true} />
+            </Link>
             <div className="flex items-center gap-4">
               <button
                 onClick={toggleTheme}
@@ -92,9 +92,13 @@ export default function CanvasSelectPage() {
               </button>
               <Link
                 to="/account"
-                className="px-4 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-900 transition-colors"
+                className={`px-4 py-2 rounded-lg transition-colors ${
+                  theme === 'dark'
+                    ? 'hover:bg-gray-900 text-white'
+                    : 'hover:bg-gray-100 text-gray-900'
+                }`}
               >
-                Account
+                Аккаунт
               </Link>
             </div>
           </div>
@@ -104,9 +108,9 @@ export default function CanvasSelectPage() {
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold mb-4">Select Your Canvas</h1>
+          <h1 className="text-4xl font-bold mb-4">Выберите холст</h1>
           <p className="text-gray-600 dark:text-gray-400">
-            Choose a canvas to work on or create a new one
+            Выберите холст для работы или создайте новый
           </p>
         </div>
 
@@ -147,7 +151,7 @@ export default function CanvasSelectPage() {
                 </div>
                 <h3 className="text-xl font-semibold">{canvas.name}</h3>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
-                  {canvas.widgets.length} widget{canvas.widgets.length !== 1 ? 's' : ''}
+                  {canvas.widgets.length} виджет{canvas.widgets.length !== 1 && canvas.widgets.length < 5 ? 'а' : 'ов'}
                 </p>
               </div>
             </div>
@@ -162,7 +166,7 @@ export default function CanvasSelectPage() {
               <div className={`mb-4 flex h-12 w-12 items-center justify-center rounded-full ${accentIconClasses}`}>
                 <Plus className="w-6 h-6" />
               </div>
-              <span className="font-medium">Create New Canvas</span>
+              <span className="font-medium">Создать новый холст</span>
             </div>
           </div>
 
@@ -186,14 +190,16 @@ export default function CanvasSelectPage() {
                 }`}
                 onClick={(e) => e.stopPropagation()}
               >
-                <h3 className="mb-4 text-2xl font-bold">Create New Canvas</h3>
+                <h3 className="mb-4 text-2xl font-bold">Создать новый холст</h3>
                 <form onSubmit={handleCreateCanvas}>
                   <div className="mb-6">
                     <label
                       htmlFor="canvasName"
-                      className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-200"
+                      className={`mb-2 block text-sm font-medium ${
+                        theme === 'dark' ? 'text-gray-200' : 'text-black'
+                      }`}
                     >
-                      Canvas Name
+                      Название холста
                     </label>
                     <input
                       id="canvasName"
@@ -202,7 +208,7 @@ export default function CanvasSelectPage() {
                       value={newCanvasName}
                       onChange={(e) => setNewCanvasName(e.target.value)}
                       className="input input-bordered w-full"
-                      placeholder="e.g., Marketing Dashboard"
+                      placeholder="напр., Маркетинговая панель"
                       autoFocus
                     />
                   </div>
@@ -210,15 +216,19 @@ export default function CanvasSelectPage() {
                     <button
                       type="button"
                       onClick={() => setIsCreateOpen(false)}
-                      className="rounded-2xl border border-gray-300 px-4 py-2 font-semibold text-gray-700 transition hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-300 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-800 dark:focus-visible:ring-gray-600 dark:focus-visible:ring-offset-gray-900"
+                      className={`rounded-2xl border px-4 py-2 font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${
+                        theme === 'dark'
+                          ? 'border-gray-600 text-gray-200 hover:bg-gray-800 focus-visible:ring-gray-600 focus-visible:ring-offset-gray-900'
+                          : 'border-gray-300 text-black hover:bg-gray-100 focus-visible:ring-gray-300 focus-visible:ring-offset-white'
+                      }`}
                     >
-                      Cancel
+                      Отмена
                     </button>
                     <button
                       type="submit"
                       className="rounded-2xl bg-blue-600 px-5 py-2.5 font-semibold text-white shadow-lg shadow-blue-500/20 transition hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-gray-900"
                     >
-                      Create
+                      Создать
                     </button>
                   </div>
                 </form>
@@ -246,14 +256,16 @@ export default function CanvasSelectPage() {
                 }`}
                 onClick={(e) => e.stopPropagation()}
               >
-                <h3 className="mb-4 text-2xl font-bold">Rename Canvas</h3>
+                <h3 className="mb-4 text-2xl font-bold">Переименовать холст</h3>
                 <form onSubmit={handleRenameSubmit}>
                   <div className="mb-6">
                     <label
                       htmlFor="renameCanvasName"
-                      className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-200"
+                      className={`mb-2 block text-sm font-medium ${
+                        theme === 'dark' ? 'text-gray-200' : 'text-black'
+                      }`}
                     >
-                      Canvas Name
+                      Название холста
                     </label>
                     <input
                       id="renameCanvasName"
@@ -262,7 +274,7 @@ export default function CanvasSelectPage() {
                       value={renameValue}
                       onChange={(e) => setRenameValue(e.target.value)}
                       className="input input-bordered w-full"
-                      placeholder="Enter new canvas name"
+                      placeholder="Введите новое название"
                       autoFocus
                     />
                   </div>
@@ -270,15 +282,19 @@ export default function CanvasSelectPage() {
                     <button
                       type="button"
                       onClick={() => setIsRenameOpen(false)}
-                      className="rounded-2xl border border-gray-300 px-4 py-2 font-semibold text-gray-700 transition hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-300 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-800 dark:focus-visible:ring-gray-600 dark:focus-visible:ring-offset-gray-900"
+                      className={`rounded-2xl border px-4 py-2 font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${
+                        theme === 'dark'
+                          ? 'border-gray-600 text-gray-200 hover:bg-gray-800 focus-visible:ring-gray-600 focus-visible:ring-offset-gray-900'
+                          : 'border-gray-300 text-black hover:bg-gray-100 focus-visible:ring-gray-300 focus-visible:ring-offset-white'
+                      }`}
                     >
-                      Cancel
+                      Отмена
                     </button>
                     <button
                       type="submit"
                       className="rounded-2xl bg-blue-600 px-5 py-2.5 font-semibold text-white shadow-lg shadow-blue-500/20 transition hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-gray-900"
                     >
-                      Rename
+                      Переименовать
                     </button>
                   </div>
                 </form>

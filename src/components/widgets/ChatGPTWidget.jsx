@@ -1,7 +1,9 @@
-import { Bot, Send, Upload, Trash2, Loader2, Settings } from 'lucide-react';
+import { Bot, Send, Upload, Trash2, Loader2, Settings, FileText, X } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { useTheme } from '../../contexts/ThemeContext';
 import openaiService from '../../services/openai.js';
+
+const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
 
 export default function ChatGPTWidget({ config, onUpdate, isFullscreen = false }) {
   const { theme } = useTheme();
@@ -12,13 +14,16 @@ export default function ChatGPTWidget({ config, onUpdate, isFullscreen = false }
       return config.messages;
     }
     return [
-      { role: 'assistant', content: 'Hello! How can I help you analyze your business today?' }
+      { role: 'assistant', content: 'Здравствуйте! Как я могу помочь проанализировать ваш бизнес сегодня?' }
     ];
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [attachedFiles, setAttachedFiles] = useState([]);
+  const fileInputRef = useRef(null);
 
   // Persist messages to config when they change (but not on initial mount)
   const isInitialMount = useRef(true);
+  const scrollContainerRef = useRef(null);
   useEffect(() => {
     if (isInitialMount.current) {
       isInitialMount.current = false;
@@ -29,13 +34,54 @@ export default function ChatGPTWidget({ config, onUpdate, isFullscreen = false }
     }
   }, [messages]);
 
+  const toBase64 = (file) => new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = reject;
+  });
+
+  const handleFileChange = async (e) => {
+    const files = e.target.files;
+    if (!files.length) return;
+    
+    const newFiles = [];
+    for (let file of files) {
+      try {
+        const base64 = await toBase64(file);
+        newFiles.push({
+          id: Date.now() + Math.random(),
+          name: file.name,
+          size: file.size,
+          type: file.type,
+          data: base64
+        });
+      } catch (error) {
+        console.error('Error reading file:', error);
+      }
+    }
+    setAttachedFiles(prev => [...prev, ...newFiles]);
+  };
+
+  const removeFile = (fileId) => {
+    setAttachedFiles(prev => prev.filter(f => f.id !== fileId));
+  };
+
   const handleSend = async (e) => {
     e.preventDefault();
     if (!message.trim() || isLoading) return;
 
-    const newMessages = [...messages, { role: 'user', content: message }];
+    // Build message content with file information
+    let messageContent = message;
+    if (attachedFiles.length > 0) {
+      const fileList = attachedFiles.map(f => `\n- ${f.name} (${(f.size / 1024).toFixed(1)} KB)`).join('');
+      messageContent += `\n\n[Attached Files: ${attachedFiles.length}${fileList}]`;
+    }
+
+    const newMessages = [...messages, { role: 'user', content: messageContent, files: attachedFiles }];
     setMessages(newMessages);
     setMessage('');
+    setAttachedFiles([]);
     setIsLoading(true);
 
     try {
@@ -63,14 +109,65 @@ export default function ChatGPTWidget({ config, onUpdate, isFullscreen = false }
 
   const handleClear = () => {
     const initialMessage = [
-      { role: 'assistant', content: 'Hello! How can I help you analyze your business today?' }
+      { role: 'assistant', content: 'Здравствуйте! Как я могу помочь проанализировать ваш бизнес сегодня?' }
     ];
     setMessages(initialMessage);
+    setAttachedFiles([]);
+  };
+
+  const handleWidgetWheel = (e) => {
+    const scrollContainer = scrollContainerRef.current;
+    const isModifierZoom = e.ctrlKey || e.metaKey;
+
+    if (isModifierZoom) {
+      return;
+    }
+
+    if (!scrollContainer) {
+      e.stopPropagation();
+      e.preventDefault();
+      return;
+    }
+
+    const isScrollable = scrollContainer.scrollHeight > scrollContainer.clientHeight;
+    const isInteractingWithScrollableArea = scrollContainer.contains(e.target);
+
+    e.stopPropagation();
+
+    if (!isScrollable) {
+      e.preventDefault();
+      return;
+    }
+
+    if (!isInteractingWithScrollableArea) {
+      e.preventDefault();
+      const maxScrollTop = scrollContainer.scrollHeight - scrollContainer.clientHeight;
+      const nextScrollTop = clamp(scrollContainer.scrollTop + e.deltaY, 0, maxScrollTop);
+      scrollContainer.scrollTop = nextScrollTop;
+      return;
+    }
+
+    const scrollTop = scrollContainer.scrollTop;
+    const scrollHeight = scrollContainer.scrollHeight;
+    const clientHeight = scrollContainer.clientHeight;
+    const isAtTop = scrollTop <= 0;
+    const isAtBottom = scrollTop + clientHeight >= scrollHeight - 1;
+
+    if ((e.deltaY < 0 && isAtTop) || (e.deltaY > 0 && isAtBottom)) {
+      e.preventDefault();
+    }
   };
 
   return (
-    <div className="flex flex-col h-full">
-      <div className={`flex-1 overflow-y-auto ${isFullscreen ? 'p-6' : 'p-4'} ${isFullscreen ? 'space-y-4' : 'space-y-3'}`}>
+    <div
+      className="flex flex-col h-full"
+      data-canvas-wheel-lock="true"
+      onWheel={handleWidgetWheel}
+    >
+      <div
+        ref={scrollContainerRef}
+        className={`flex-1 overflow-y-auto ${isFullscreen ? 'p-6' : 'p-4'} ${isFullscreen ? 'space-y-4' : 'space-y-3'}`}
+      >
         {messages.map((msg, index) => (
           <div key={index} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} ${isFullscreen ? 'mb-4' : 'mb-3'}`}>
             <div className={`max-w-[80%] ${isFullscreen ? 'px-4 py-3' : 'px-3 py-2'} rounded-lg ${
@@ -88,39 +185,98 @@ export default function ChatGPTWidget({ config, onUpdate, isFullscreen = false }
           <div className="flex justify-start">
             <div className={`max-w-[80%] ${isFullscreen ? 'px-4 py-3' : 'px-3 py-2'} rounded-lg ${theme === 'dark' ? 'bg-gray-900' : 'bg-gray-200'} flex items-center gap-2 ${theme === 'dark' ? 'text-gray-100' : 'text-black'}`}>
               <Loader2 className="w-4 h-4 animate-spin" />
-              <p className={isFullscreen ? 'text-base' : 'text-sm'}>Analyzing your request...</p>
+              <p className={isFullscreen ? 'text-base' : 'text-sm'}>Анализирую ваш запрос...</p>
             </div>
           </div>
         )}
       </div>
-      <form onSubmit={handleSend} className={`${isFullscreen ? 'p-6' : 'p-3'} border-t border-gray-200 dark:border-gray-800`}>
+      <form 
+        onSubmit={handleSend} 
+        className={`${isFullscreen ? 'p-6' : 'p-3'} border-t dark:border-gray-800`}
+        style={theme === 'light' ? { borderColor: '#e5e7eb' } : {}}
+      >
         <div className="flex gap-2 mb-2">
           <button
             type="button"
             onClick={handleClear}
-            className="px-3 py-1.5 text-xs border border-gray-200 dark:border-gray-800 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors flex items-center gap-1"
+            className={`px-3 py-1.5 text-xs border rounded-lg transition-colors flex items-center gap-1 ${
+              theme === 'dark'
+                ? 'border-gray-800 hover:bg-gray-900 text-white'
+                : 'border-gray-300 hover:bg-gray-50 text-gray-900'
+            }`}
           >
             <Trash2 className="w-3 h-3" />
-            Clear
+            Очистить
           </button>
           <button
             type="button"
-            className="px-3 py-1.5 text-xs border border-gray-200 dark:border-gray-800 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors flex items-center gap-1"
+            onClick={() => fileInputRef.current?.click()}
+            className={`px-3 py-1.5 text-xs border rounded-lg transition-colors flex items-center gap-1 ${
+              theme === 'dark'
+                ? 'border-gray-800 hover:bg-gray-900 text-white'
+                : 'border-gray-300 hover:bg-gray-50 text-gray-900'
+            }`}
           >
             <Upload className="w-3 h-3" />
-            Upload
+            Загрузить {attachedFiles.length > 0 && `(${attachedFiles.length})`}
           </button>
-          <span className={`text-xs ml-auto self-center ${
-            theme === 'dark' ? 'text-gray-400' : 'text-gray-700'
-          }`}>
-            {messages.length} messages
+          <input
+            type="file"
+            multiple
+            ref={fileInputRef}
+            style={{ display: 'none' }}
+            onChange={handleFileChange}
+            accept=".pdf,.doc,.docx,.txt,.csv,.xlsx,.xls,.json,.xml,.jpg,.jpeg,.png,.gif"
+          />
+          <span 
+            className="text-xs ml-auto self-center dark:text-gray-400"
+            style={theme === 'light' ? { color: '#374151' } : {}}
+          >
+            {messages.length} сообщений
           </span>
         </div>
+        
+        {/* Attached Files Display */}
+        {attachedFiles.length > 0 && (
+          <div className="mb-2 space-y-2 max-h-32 overflow-y-auto">
+            {attachedFiles.map(file => (
+              <div 
+                key={file.id}
+                className="flex items-center gap-2 py-2 px-3 text-xs rounded-lg transition-colors"
+                style={theme === 'light' ? { 
+                  backgroundColor: '#f9fafb',
+                  color: '#374151'
+                } : {
+                  backgroundColor: '#374151',
+                  color: '#e5e7eb'
+                }}
+              >
+                <FileText className="w-4 h-4 flex-shrink-0" style={{ color: '#6b7280' }} />
+                <span className="flex-1 truncate">{file.name}</span>
+                <span 
+                  className="flex-shrink-0"
+                  style={theme === 'light' ? { color: '#6b7280' } : { color: '#9ca3af' }}
+                >
+                  ({(file.size / 1024).toFixed(1)} KB)
+                </span>
+                <button
+                  type="button"
+                  onClick={() => removeFile(file.id)}
+                  className="flex-shrink-0 p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                  title="Remove file"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+        
         <div className="space-y-2">
           <textarea
             value={message}
             onChange={(e) => setMessage(e.target.value)}
-            placeholder="Ask anything..."
+            placeholder="Спросите что угодно..."
             rows={3}
             onKeyDown={(e) => {
               if (e.key === 'Enter' && !e.shiftKey) {
@@ -128,8 +284,8 @@ export default function ChatGPTWidget({ config, onUpdate, isFullscreen = false }
                 handleSend(e);
               }
             }}
-            className={`w-full px-4 py-3 rounded-lg border border-gray-200 dark:border-gray-800 bg-transparent ${isFullscreen ? 'text-base' : 'text-sm'} focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y ${isFullscreen ? 'min-h-[6rem] max-h-64' : 'min-h-[4rem] max-h-32'} overflow-y-auto`}
-            style={{ resize: 'vertical' }}
+            className={`w-full px-4 py-3 rounded-lg border dark:border-gray-800 bg-transparent ${isFullscreen ? 'text-base' : 'text-sm'} focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y ${isFullscreen ? 'min-h-[6rem] max-h-64' : 'min-h-[4rem] max-h-32'} overflow-y-auto`}
+            style={theme === 'light' ? { resize: 'vertical', borderColor: '#e5e7eb' } : { resize: 'vertical' }}
           />
           <button
             type="submit"
@@ -139,12 +295,12 @@ export default function ChatGPTWidget({ config, onUpdate, isFullscreen = false }
             {isLoading ? (
               <>
                 <Loader2 className={`${isFullscreen ? 'w-5 h-5' : 'w-4 h-4'} animate-spin`} />
-                <span>Processing...</span>
+                <span>Обработка...</span>
               </>
             ) : (
               <>
                 <Send className={`${isFullscreen ? 'w-5 h-5' : 'w-4 h-4'}`} />
-                <span>Send Message</span>
+                <span>Отправить</span>
               </>
             )}
           </button>

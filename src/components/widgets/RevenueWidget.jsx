@@ -7,10 +7,10 @@ export default function RevenueWidget({ config, isFullscreen = false }) {
   const { theme } = useTheme();
   const [isLoading, setIsLoading] = useState(true);
   const allMetrics = [
-    { label: 'Revenue', value: '$124,500', change: '+25.2%', trend: 'up', key: 'revenue' },
-    { label: 'Expenses', value: '$45,200', change: '-8.1%', trend: 'down', key: 'expenses' },
-    { label: 'Profit', value: '$79,300', change: '+32.5%', trend: 'up', key: 'profit' },
-    { label: 'Growth', value: '+15.4%', change: '+3.2%', trend: 'up', key: 'growth' }
+    { label: 'Доходы', value: '$124,500', change: '+25.2%', trend: 'up', key: 'revenue' },
+    { label: 'Расходы', value: '$45,200', change: '-8.1%', trend: 'down', key: 'expenses' },
+    { label: 'Прибыль', value: '$79,300', change: '+32.5%', trend: 'up', key: 'profit' },
+    { label: 'Рост', value: '+15.4%', change: '+3.2%', trend: 'up', key: 'growth' }
   ];
 
   const metrics = config.metrics ? allMetrics.filter(metric => config.metrics.includes(metric.key)) : allMetrics;
@@ -25,10 +25,20 @@ export default function RevenueWidget({ config, isFullscreen = false }) {
   return (
     <div className="h-full flex flex-col p-2">
       {!config.configured ? (
-        <div className="h-full flex flex-col items-center justify-center text-center py-8 text-gray-600 dark:text-gray-400">
+        <div className="h-full flex flex-col items-center justify-center text-center py-8 dark:text-gray-400">
           <Settings className="w-12 h-12 mb-2 opacity-30" />
-          <p className="text-sm text-gray-700 dark:text-gray-300">Configure revenue tracking</p>
-          <p className="text-xs mt-1 text-gray-600 dark:text-gray-400">Select accounting system and metrics</p>
+          <p 
+            className="text-sm dark:text-gray-300"
+            style={theme === 'light' ? { color: '#374151' } : {}}
+          >
+            Настроить отслеживание доходов
+          </p>
+          <p 
+            className="text-xs mt-1 dark:text-gray-400"
+            style={theme === 'light' ? { color: '#4b5563' } : {}}
+          >
+            Выберите систему учёта и метрики
+          </p>
         </div>
       ) : (
         <>
@@ -37,12 +47,20 @@ export default function RevenueWidget({ config, isFullscreen = false }) {
           ) : (
             <>
               <div className="flex items-center justify-between mb-4">
-                <h3 className="font-medium text-sm">
-                  {config.accountingSystem ? `${config.accountingSystem.charAt(0).toUpperCase() + config.accountingSystem.slice(1)} Metrics` : 'Revenue Overview'}
+                <h3 
+                  className="font-medium text-sm dark:text-gray-100"
+                  style={theme === 'light' ? { color: '#111827' } : {}}
+                >
+                  {config.accountingSystem ? `Метрики ${config.accountingSystem.charAt(0).toUpperCase() + config.accountingSystem.slice(1)}` : 'Обзор доходов'}
                 </h3>
                 <div className="flex items-center gap-2">
                   <DollarSign className="w-4 h-4 text-green-500" />
-                  <span className="text-xs text-gray-600 dark:text-gray-400">Connected</span>
+                  <span 
+                    className="text-xs dark:text-gray-400"
+                    style={theme === 'light' ? { color: '#4b5563' } : {}}
+                  >
+                    Подключено
+                  </span>
                 </div>
               </div>
               <div className="space-y-4">
@@ -51,7 +69,12 @@ export default function RevenueWidget({ config, isFullscreen = false }) {
                     theme === 'dark' ? 'bg-gray-900' : 'bg-gray-50'
                   }`}>
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm text-gray-600 dark:text-gray-400">{metric.label}</span>
+                      <span 
+                        className="text-sm dark:text-gray-400"
+                        style={theme === 'light' ? { color: '#4b5563' } : {}}
+                      >
+                        {metric.label}
+                      </span>
                       <div className={`flex items-center gap-1 text-sm font-medium ${
                         metric.trend === 'up' ? 'text-green-600' : 'text-red-600'
                       }`}>
@@ -59,8 +82,18 @@ export default function RevenueWidget({ config, isFullscreen = false }) {
                         {metric.change}
                       </div>
                     </div>
-                    <div className="text-2xl font-bold">{metric.value}</div>
-                    <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">vs last month</p>
+                    <div 
+                      className="text-2xl font-bold dark:text-white"
+                      style={theme === 'light' ? { color: '#111827' } : {}}
+                    >
+                      {metric.value}
+                    </div>
+                    <p 
+                      className="text-xs dark:text-gray-400 mt-1"
+                      style={theme === 'light' ? { color: '#4b5563' } : {}}
+                    >
+                      по сравнению с прошлым месяцем
+                    </p>
                   </div>
                 ))}
               </div>
